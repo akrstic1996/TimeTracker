@@ -78,7 +78,9 @@ public class App
     }
 
     private static void monitor(Application a) throws IOException {
-        //Runtime.getRuntime().exec();
+        String[] str = new String[1];
+        str[0] = a.getDirectory() + "Code.exe";
+        Runtime.getRuntime().exec(str, null, new File(a.getDirectory()));
         System.out.println("Now tracking: " + a.getName());
 
     }
