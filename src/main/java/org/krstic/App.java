@@ -3,19 +3,13 @@ package org.krstic;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.awt.Desktop;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.krstic.model.Application;
 
-/**
- * Hello world!
- *
- */
 public class App 
 {
     public static void main( String[] args ) throws IOException, InterruptedException {
@@ -59,7 +53,7 @@ public class App
         Scanner scan = new Scanner(System.in);
         System.out.println("Give the name of the application: ");
         newApp.setName(scan.nextLine());
-        System.out.println("Give the directory of the .exe");
+        System.out.println("Give the path of the .exe");
         newApp.setDirectory(scan.nextLine());
         a.add(newApp);
         writeFile(a);
@@ -85,11 +79,18 @@ public class App
 
     private static void monitor(List<Application> a, int index) throws IOException, InterruptedException {
         String[] str = new String[1];
-        str[0] = a.get(index).getDirectory() + "Code.exe";
-        Process p = Runtime.getRuntime().exec(str, null, new File(a.get(index).getDirectory()));
+        str[0] = a.get(index).getDirectory();
+        System.out.println("HERRO" + str[0]);
+        String[] splitted = str[0].split("\\\\");
+        String directory = "";
+        for (int i = 0; i < splitted.length - 2; i++) {
+            directory +=  splitted[i] + "\\";
+        }
+        Process p = Runtime.getRuntime().exec(str, null, new File(directory));
         System.out.println("Now tracking: " + a.get(index).getName());
         System.out.println("Total Time: " + a.get(index).getHours() + " hours and " + a.get(index).getMinutes() + " minutes");
         long start = System.currentTimeMillis();
+        TimeUnit.SECONDS.sleep(10);
         while (p.isAlive()) {
             TimeUnit.SECONDS.sleep(3);
         }

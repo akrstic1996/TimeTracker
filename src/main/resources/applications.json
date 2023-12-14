@@ -1,6 +1,16 @@
 [ {
   "name" : "vscode",
-  "directory" : "C:\\Users\\Aleksa\\AppData\\Local\\Programs\\Microsoft VS Code\\",
+  "directory" : "C:\\Users\\Aleksa\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
   "hours" : 1,
   "minutes" : 1
+}, {
+  "name" : "Postman",
+  "directory" : "C:\\Users\\Aleksa\\AppData\\Local\\Postman\\Postman.exe",
+  "hours" : 0,
+  "minutes" : 0
+}, {
+  "name" : "Blender",
+  "directory" : "C:\\Program Files\\Blender Foundation\\Blender 4.0\\blender-launcher.exe",
+  "hours" : 0,
+  "minutes" : 0
 } ]
