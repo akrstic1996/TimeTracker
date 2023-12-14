@@ -3,11 +3,19 @@ package org.krstic.model;
 public class Application {
 
     private String name;
-
+    private String exe;
     private String directory;
     private int hours = 0;
     private int minutes = 0;
 
+
+    public String getExe() {
+        return exe;
+    }
+
+    public void setExe(String exe) {
+        this.exe = exe;
+    }
     public String getName() {
         return name;
     }
@@ -31,6 +39,7 @@ public class Application {
     public void setHours(int hours) {
         this.hours = hours;
     }
+
 
     public int getMinutes() {
         return minutes;

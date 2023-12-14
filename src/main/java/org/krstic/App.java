@@ -1,7 +1,9 @@
 package org.krstic;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -53,8 +55,10 @@ public class App
         Scanner scan = new Scanner(System.in);
         System.out.println("Give the name of the application: ");
         newApp.setName(scan.nextLine());
-        System.out.println("Give the path of the .exe");
+        System.out.println("Give the path of the .exe to launch (Shortcut properties -> Target)");
         newApp.setDirectory(scan.nextLine());
+        System.out.println("Give the name of the exe that runs in tasklist");
+        newApp.setExe(scan.nextLine());
         a.add(newApp);
         writeFile(a);
     }
@@ -80,7 +84,6 @@ public class App
     private static void monitor(List<Application> a, int index) throws IOException, InterruptedException {
         String[] str = new String[1];
         str[0] = a.get(index).getDirectory();
-        System.out.println("HERRO" + str[0]);
         String[] splitted = str[0].split("\\\\");
         String directory = "";
         for (int i = 0; i < splitted.length - 2; i++) {
@@ -89,9 +92,9 @@ public class App
         Process p = Runtime.getRuntime().exec(str, null, new File(directory));
         System.out.println("Now tracking: " + a.get(index).getName());
         System.out.println("Total Time: " + a.get(index).getHours() + " hours and " + a.get(index).getMinutes() + " minutes");
-        long start = System.currentTimeMillis();
         TimeUnit.SECONDS.sleep(10);
-        while (p.isAlive()) {
+        long start = System.currentTimeMillis();
+        while (p.isAlive() || checkIfProcessRunning(a.get(index))) {
             TimeUnit.SECONDS.sleep(3);
         }
         long finish = System.currentTimeMillis();
@@ -108,4 +111,25 @@ public class App
         System.out.println("Total Time: " + a.get(index).getHours() + " hours and " + a.get(index).getMinutes() + " minutes");
         writeFile(a);
     }
+
+    private static boolean checkIfProcessRunning(Application a) {
+        try {
+            String line;
+            Process p = Runtime.getRuntime().exec("tasklist.exe /fo csv /nh");
+            BufferedReader input =
+                    new BufferedReader(new InputStreamReader(p.getInputStream()));
+            while ((line = input.readLine()) != null) {
+                String processName = line.split(",")[0];
+                if (processName.equalsIgnoreCase("\"" + a.getExe() + "\"")) {
+                    return true;
+                }
+            }
+            input.close();
+        } catch (Exception err) {
+            err.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
 }
