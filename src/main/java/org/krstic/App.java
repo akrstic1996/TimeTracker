@@ -14,26 +14,36 @@ import org.krstic.model.Application;
 
 public class App 
 {
+    // TODO Add last session times as attribute to Application object
     public static void main( String[] args ) throws IOException, InterruptedException {
+        mainMenu();
+    }
+
+    private static void mainMenu() throws IOException, InterruptedException {
         // Welcome message
         Scanner scanner = new Scanner(System.in);
         System.out.println( "Welcome to the time tracker. In this application, "
-        + "you can track how much time you have spent using another application " +
-        "per session and total time.");
+                + "you can track how much time you have spent using another application " +
+                "per session and total time.");
         // User chooses which menu option
-        System.out.println("Main Menu: \n\n1. Launch an application \n2. Edit applications\n3. Quit\n\nChoose an option:  ");
+        System.out.println("Main Menu: \n\n1. Launch an application \n2. Onboard an application\n3. Remove an Application\n4. Quit" +
+                "\n\nChoose an option:  ");
         switch (scanner.nextInt()) {
             case 1:
                 launchApplications();
                 break;
             case 2:
-                editApplications();
+                onboardApplication();
                 break;
             case 3:
+                removeApplication();
+                break;
+            case 4:
                 System.exit(0);
                 break;
             default:
-                break;
+                System.out.println("Invalid choice.\n\n\n");
+                mainMenu();
         }
     }
 
@@ -41,10 +51,10 @@ public class App
         List<Application> a = readFile();
         Scanner scan = new Scanner(System.in);
         System.out.println("Choose one of the onboarded apps: ");
-
+        // TODO sanitize input
         for (int i = 0; i < a.size(); i++) {
-            System.out.println(i + ". " + a.get(i).getName());
-            System.out.println("Total Time: " + a.get(i).getHours() + " hours and " + a.get(i).getMinutes() + " minutes");
+            System.out.println(i + ". " + a.get(i).getName() +
+                    " -- Total Time: " + a.get(i).getHours() + " hours and " + a.get(i).getMinutes() + " minutes");
         }
 
         monitor(a, scan.nextInt());
@@ -52,9 +62,9 @@ public class App
     }
 
     // Allows the user to onboard a new app
-    // TODO delete apps
+    // TODO sanitize input
     // TODO test successful on board? (maybe)
-    private static void editApplications() throws IOException {
+    private static void onboardApplication() throws IOException, InterruptedException {
         List<Application> a = new ArrayList(readFile());
         Application newApp = new Application();
         Scanner scan = new Scanner(System.in);
@@ -62,15 +72,38 @@ public class App
         newApp.setName(scan.nextLine());
         System.out.println("Give the path of the .exe to launch (Shortcut properties -> Target)");
         newApp.setDirectory(scan.nextLine());
-        System.out.println("Give the name of the exe that runs in tasklist");
+        System.out.println("Give the name of the exe that runs in tasklist. This is the .exe " +
+                "that appears when you do cmd -> tasklist while your chosen application is running.");
         newApp.setExe(scan.nextLine());
         a.add(newApp);
         writeFile(a);
     }
 
 
+    // Removes an application from the list
+    // TODO Sanitize input
+    private static void removeApplication() throws IOException, InterruptedException {
+        List<Application> a = new ArrayList<>(readFile());
+        Scanner scan = new Scanner(System.in);
+        if (a.isEmpty()) {
+            System.out.println("No onboarded apps.");
+            mainMenu();
+        } else {
+            System.out.println("Choose one of the onboarded apps to remove: ");
+
+            for (int i = 0; i < a.size(); i++) {
+                System.out.println(i + ". " + a.get(i).getName());
+                System.out.println("Total Time: " + a.get(i).getHours() + " hours and " + a.get(i).getMinutes() + " minutes");
+            }
+            a.remove(scan.nextInt());
+            writeFile(a);
+        }
+    }
+
+
     // Function to read the data from applications.json.
     // TODO This should be changed so that the final executable can read from a file external to the compiled binary.
+    // Or maybe not.. If we can make the app robust enough to only use the json for internal storage
     private static List<Application> readFile() {
         ObjectMapper mapper = new ObjectMapper();
         File file = new File("src/main/resources/applications.json");
@@ -83,10 +116,11 @@ public class App
     }
 
     // Writing to applications.json
-    private static void writeFile(List<Application> a) throws IOException {
+    private static void writeFile(List<Application> a) throws IOException, InterruptedException {
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
         writer.writeValue(new File("src/main/resources/applications.json"), a);
+        mainMenu();
     }
 
 
@@ -94,9 +128,8 @@ public class App
     private static void monitor(List<Application> a, int index) throws IOException, InterruptedException {
 
         // Here we are removing the example.exe part from the directory to use as an argument later
-        String[] str = new String[1];
         // Also, for some reason, Runtime.getRuntime().exec requires that the command be wrapped in an array.
-        // TODO This could be made cleaner IMO. Should fix.
+        String[] str = new String[1];
         str[0] = a.get(index).getDirectory();
         String[] splitted = str[0].split("\\\\");
         String directory = "";
@@ -116,19 +149,28 @@ public class App
             TimeUnit.SECONDS.sleep(3);
         }
         // Calculate new usage time from current session
-        // TODO add messaging for current session
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
         int seconds = (int) (timeElapsed / 1000);
         int minutes = seconds / 60;
+        int hours = minutes / 60;
+        // Calculate new values to store for overall times
         int newMins = a.get(index).getMinutes() + minutes;
         int newHours = a.get(index).getHours() + (newMins / 60);
         if (newMins > 59) {
             newMins = newMins % 60;
         }
+        // Calculate current session
+        if (minutes > 59) {
+            minutes = minutes % 60;
+        }
+        // Set new values
         a.get(index).setMinutes(newMins);
         a.get(index).setHours(newHours);
-        System.out.println("Total Time: " + a.get(index).getHours() + " hours and " + a.get(index).getMinutes() + " minutes");
+        // Output
+        System.out.println("\n\n\n\n\nCurrent session: " + hours + " hours and " + minutes + " minutes." +
+                " | Total Time: " + a.get(index).getHours() + " hours and " + a.get(index).getMinutes() + " minutes\n\n\n\n");
+        TimeUnit.SECONDS.sleep(10);
         // Finish and write to file
         writeFile(a);
     }
