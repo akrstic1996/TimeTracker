@@ -14,7 +14,9 @@ import org.krstic.model.Application;
 
 public class App 
 {
-    // TODO Add last session times as attribute to Application object
+    // TODO Make all failures safe, make app unbreakable
+    // TODO EVENTUALLY GUI and maybe some other bells and whistles
+    // Handle all exceptions.
     public static void main( String[] args ) throws IOException, InterruptedException {
         mainMenu();
     }
@@ -28,7 +30,7 @@ public class App
         // User chooses which menu option
         System.out.println("Main Menu: \n\n1. Launch an application \n2. Onboard an application\n3. Remove an Application\n4. Quit" +
                 "\n\nChoose an option:  ");
-        switch (scanner.nextInt()) {
+        switch (sanitizeInt(scanner.nextLine())) {
             case 1:
                 launchApplications();
                 break;
@@ -43,27 +45,36 @@ public class App
                 break;
             default:
                 System.out.println("Invalid choice.\n\n\n");
+                TimeUnit.SECONDS.sleep(3);
                 mainMenu();
         }
     }
 
+    // TODO add back mechanic so you don't have to be stuck at this menu
     private static void launchApplications() throws IOException, InterruptedException {
         List<Application> a = readFile();
         Scanner scan = new Scanner(System.in);
         System.out.println("Choose one of the onboarded apps: ");
-        // TODO sanitize input
+
         for (int i = 0; i < a.size(); i++) {
-            System.out.println(i + ". " + a.get(i).getName() +
-                    " -- Total Time: " + a.get(i).getHours() + " hours and " + a.get(i).getMinutes() + " minutes");
+            System.out.println("===========================================================");
+            System.out.println(i + ". " + a.get(i).getName());
+            System.out.println("Total Time: " + a.get(i).getHours() + " hours and " + a.get(i).getMinutes() + " minutes");
+            System.out.println("Last Session: " + a.get(i).getLastSessionHours() + " hours and " + a.get(i).getLastSessionMinutes() + " minutes");
+            System.out.println("===========================================================");
         }
-
-        monitor(a, scan.nextInt());
-
+        // Sanitize input for null, non integer, negative
+        int choice = sanitizeInt(scan.nextLine());
+        if (choice >= a.size() || choice < 0) {
+            System.out.println("Invalid selection.");
+            launchApplications();
+        } else monitor(a, choice);
     }
 
     // Allows the user to onboard a new app
-    // TODO sanitize input
+    // TODO sanitize input (make fail safe)
     // TODO test successful on board? (maybe)
+    // TODO add back mechanic so you don't have to be stuck at this menu
     private static void onboardApplication() throws IOException, InterruptedException {
         List<Application> a = new ArrayList(readFile());
         Application newApp = new Application();
@@ -81,7 +92,7 @@ public class App
 
 
     // Removes an application from the list
-    // TODO Sanitize input
+    // TODO add back mechanic so you don't have to be stuck at this menu
     private static void removeApplication() throws IOException, InterruptedException {
         List<Application> a = new ArrayList<>(readFile());
         Scanner scan = new Scanner(System.in);
@@ -95,15 +106,22 @@ public class App
                 System.out.println(i + ". " + a.get(i).getName());
                 System.out.println("Total Time: " + a.get(i).getHours() + " hours and " + a.get(i).getMinutes() + " minutes");
             }
-            a.remove(scan.nextInt());
-            writeFile(a);
+            // Sanitize input for null, non integer, negative
+            int choice = sanitizeInt(scan.nextLine());
+            if (choice >= a.size() || choice < 0) {
+                System.out.println("Invalid selection.");
+                removeApplication();
+            } else {
+                a.remove(choice);
+                writeFile(a);
+            }
         }
     }
 
 
     // Function to read the data from applications.json.
-    // TODO This should be changed so that the final executable can read from a file external to the compiled binary.
-    // Or maybe not.. If we can make the app robust enough to only use the json for internal storage
+    // This should be changed so that the final executable can read from a file external to the compiled binary.
+    // Or maybe not... Make the app robust enough to only use the json for internal storage
     private static List<Application> readFile() {
         ObjectMapper mapper = new ObjectMapper();
         File file = new File("src/main/resources/applications.json");
@@ -111,7 +129,7 @@ public class App
             List<Application> a = Arrays.asList(mapper.readValue(file, Application[].class));
             return a;
         } catch (Exception e) {
-            return new ArrayList<Application>();
+            return new ArrayList<>();
         }
     }
 
@@ -167,6 +185,8 @@ public class App
         // Set new values
         a.get(index).setMinutes(newMins);
         a.get(index).setHours(newHours);
+        a.get(index).setLastSessionHours(hours);
+        a.get(index).setLastSessionMinutes(minutes);
         // Output
         System.out.println("\n\n\n\n\nCurrent session: " + hours + " hours and " + minutes + " minutes." +
                 " | Total Time: " + a.get(index).getHours() + " hours and " + a.get(index).getMinutes() + " minutes\n\n\n\n");
@@ -196,6 +216,16 @@ public class App
             return false;
         }
         return false;
+    }
+
+    // A function that returns a clean integer from standard input (checks for null non int negative)
+    private static int sanitizeInt(String s) {
+        try {
+            int x = Integer.parseInt(s);
+            return x;
+        } catch (NumberFormatException e) {
+            return  -1;
+        }
     }
 
 }

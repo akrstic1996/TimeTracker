@@ -8,6 +8,25 @@ public class Application {
     private int hours = 0;
     private int minutes = 0;
 
+    private int lastSessionMinutes = 0;
+
+    private int lastSessionHours = 0;
+
+    public int getLastSessionMinutes() {
+        return lastSessionMinutes;
+    }
+
+    public void setLastSessionMinutes(int lastSessionMinutes) {
+        this.lastSessionMinutes = lastSessionMinutes;
+    }
+
+    public int getLastSessionHours() {
+        return lastSessionHours;
+    }
+
+    public void setLastSessionHours(int lastSessionHours) {
+        this.lastSessionHours = lastSessionHours;
+    }
 
     public String getExe() {
         return exe;
@@ -48,4 +67,5 @@ public class Application {
     public void setMinutes(int minutes) {
         this.minutes = minutes;
     }
+
 }
